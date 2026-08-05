@@ -1,4 +1,4 @@
-# server-health-monitor
+# server-health
  
 > [Русская версия](README.md)
  
