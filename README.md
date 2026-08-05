@@ -1,20 +1,20 @@
 # server-health-monitor
-
-> [Русская версия](README.ru.md)
-
-A Bash script for monitoring an Ubuntu server. Checks CPU, RAM, disk, and services — sends alerts via Telegram and email when thresholds are exceeded.
-
-Two launch modes: **cron** (every 5 minutes) or **systemd daemon** (runs continuously).
-
+ 
+> [English version](README.en.md)
+ 
+Bash скрипт мониторинга сервера Ubuntu. Проверяет CPU, RAM, диск и сервисы — отправляет алерты в Telegram и на email при превышении порогов.
+ 
+Два режима запуска: через **cron** (раз в 5 минут) или как **systemd демон** (постоянно работает).
+ 
 ---
-
-## What it monitors
-
-| Metric | Default threshold | Alert condition |
+ 
+## Что проверяет
+ 
+| Метрика | Порог по умолчанию | Алерт |
 |---|---|---|
-| CPU | 80% | Usage exceeds threshold |
-| RAM | 85% | Usage exceeds threshold |
-| Disk | 90% | Checked per partition |
-| Services | — | Service is stopped |
-
+| CPU | 80% | Если загрузка выше порога |
+| RAM | 85% | Если использование выше порога |
+| Disk | 90% | Для каждого раздела отдельно |
+| Сервисы | — | Если сервис остановлен |
+ 
 ---
