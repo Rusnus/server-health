@@ -1,6 +1,6 @@
 # server-health-monitor
 
-> 🇷🇺 [Русская версия](README.ru.md)
+> [Русская версия](README.ru.md)
 
 A Bash script for monitoring an Ubuntu server. Checks CPU, RAM, disk, and services — sends alerts via Telegram and email when thresholds are exceeded.
 
