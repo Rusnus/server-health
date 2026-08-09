@@ -41,3 +41,28 @@ ELSE
 fi
 }
 
+send_alert() {
+	local resource="$1"
+	local value="$2"
+	local unit="$3"
+
+	local timestamp
+	timestamp="$(date '+%d.%m.%Y %H:%M:%S')"
+
+	local message
+	message="<b>ALERT - ${HOSTNAME}</b>
+
+	Resource: <b>${resource}</b>
+	Value: <b>${value}${unit}</b>
+	timestamp: <b>${timestamp}</b>"
+
+	local subject="[ALERT] ${HOSTNAME}: ${resource} = ${value}${unit}"
+	local plain_message="ALERT - ${HOSTNAME}
+	Resource: ${resource}
+	Value: ${value}${unit}
+	Time: ${timestamp}"
+
+	send_telegram "$message"
+	send_email "$subject" "$plain_message"
+
+}
