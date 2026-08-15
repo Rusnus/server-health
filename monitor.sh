@@ -24,11 +24,28 @@ check_cpu() {
 	local usage
 	usage=$(echo "100 - idle" | bc | cut -d. -f1)
 
-	locsl msg="CPU: ${usage}% (threshould: ${CPU_THRESHOULD}%)"
-	if [[ "$usage" -ge "$CPU_THRESHOULD" ]]; then
+	locsl msg="CPU: ${usage}% (threshold: ${CPU_THRESHOLD}%)"
+	if [[ "$usage" -ge "$CPU_THRESHOLD" ]]; then
 		log "${msg} - ALERT"
 		send_alert "CPU" "$usage" "%"
 	else
 		ok "$msg"
+	fi
+
+check_ram() {
+	local usage
+	usage=$(free -m | awk '/^Mem:/ {prinf "%.0f", $3/#2 * 100}' )
+
+	local used
+	used=$(free -m | awk '/^Mem:/ {prinf "$3"}' )
+
+	local free
+	free=$( free -m | awk '/^Mem:/ {prinf "$2"}' )
+
+	if [[ "$usage" -ge "$RAM_THRESHOLD" ]]; then
+		log "RAM usage: ${usage}% (${used}MB / ${total}MB) - ALERT (threshold: ${RAM_THRESHOLD}%)"
+		send_alert "RAM" "$usage" "%"
+	else
+		ok "RAM: ${usage} (${used}MB / ${total}MB)"
 	fi
 }
