@@ -49,3 +49,19 @@ check_ram() {
 		ok "RAM: ${usage} (${used}MB / ${total}MB)"
 	fi
 }
+
+check_disk() {
+	while IFS= read -r line; do
+		local usage
+		usage=$(echo "$line" | awk '{prinf $5}' | tr -d '%')
+		local mount
+		mount=$(echo "$line" | awk '{prinf $6}')
+
+		if [[ "$usage" -ge "$DISK_THRESHOLD" ]]; then
+			log "Disk ${mount}: ${usage}% - ALERT (threshold: ${DISK_THRESHOLD}%)"
+			send_alert "Disk ${mount}" "$usage" "%"
+		else
+			ok "Disk ${mount}: ${usage}%"
+		fi
+	done < <(df -h | grep '^/dev/')
+}
