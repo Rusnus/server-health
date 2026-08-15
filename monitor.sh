@@ -18,3 +18,17 @@ log() { echo -e "$(date '+%d.%m.%Y %H:%M:%S') [monitor] $*" | tee -a "$LOG_FILE"
 ok() { echo -e "$(date '+%d.%m.%Y %H:%M:%S')${GREEN}[OK]${NC} $*" | tee -a "$LOG_FILE"; }
 
 
+check_cpu() {
+	local idle
+	idle=$(top -bn1 | grep "Cpu(s)" | awk '{print $8}' | tr -d '%,')
+	local usage
+	usage=$(echo "100 - idle" | bc | cut -d. -f1)
+
+	locsl msg="CPU: ${usage}% (threshould: ${CPU_THRESHOULD}%)"
+	if [[ "$usage" -ge "$CPU_THRESHOULD" ]]; then
+		log "${msg} - ALERT"
+		send_alert "CPU" "$usage" "%"
+	else
+		ok "$msg"
+	fi
+}
