@@ -15,47 +15,47 @@ source "$ALERT_FILE"
 GREEN='\033[0;32m'
 NC='\033[0m'
 log() { echo -e "$(date '+%d.%m.%Y %H:%M:%S') [monitor] $*" | tee -a "$LOG_FILE"; }
-ok() { echo -e "$(date '+%d.%m.%Y %H:%M:%S')${GREEN}[OK]${NC} $*" | tee -a "$LOG_FILE"; }
+ok() { echo -e "$(date '+%d.%m.%Y %H:%M:%S') ${GREEN}[OK]${NC} $*" | tee -a "$LOG_FILE"; }
 
 
 check_cpu() {
 	local idle
-	idle=$(top -bn1 | grep "Cpu(s)" | awk '{print $8}' | tr -d '%,')
-	local usage
-	usage=$(echo "100 - idle" | bc | cut -d. -f1)
+	idle=$(top -bn1 | grep "Cpu" | awk '{print $8}' | cut -d. -f1)
 
-	locsl msg="CPU: ${usage}% (threshold: ${CPU_THRESHOLD}%)"
+	local usage=$((100 - idle))
+
+	local msg="CPU: ${usage}% (threshold: ${CPU_THRESHOLD}%)"
 	if [[ "$usage" -ge "$CPU_THRESHOLD" ]]; then
 		log "${msg} - ALERT"
 		send_alert "CPU" "$usage" "%"
 	else
 		ok "$msg"
 	fi
-
+}
 check_ram() {
 	local usage
-	usage=$(free -m | awk '/^Mem:/ {prinf "%.0f", $3/#2 * 100}' )
+	usage=$(free -m | awk '/^Mem:/ {printf "%.0f", $3/$2 * 100}' )
 
 	local used
-	used=$(free -m | awk '/^Mem:/ {prinf "$3"}' )
+	used=$(free -m | awk '/^Mem:/ {print $3}' )
 
-	local free
-	free=$( free -m | awk '/^Mem:/ {prinf "$2"}' )
+	local total
+	total=$( free -m | awk '/^Mem:/ {print $2}' )
 
 	if [[ "$usage" -ge "$RAM_THRESHOLD" ]]; then
 		log "RAM usage: ${usage}% (${used}MB / ${total}MB) - ALERT (threshold: ${RAM_THRESHOLD}%)"
 		send_alert "RAM" "$usage" "%"
 	else
-		ok "RAM: ${usage} (${used}MB / ${total}MB)"
+		ok "RAM: ${usage}% (${used}MB / ${total}MB)"
 	fi
 }
 
 check_disk() {
 	while IFS= read -r line; do
 		local usage
-		usage=$(echo "$line" | awk '{prinf $5}' | tr -d '%')
+		usage=$(echo "$line" | awk '{print $5}' | tr -d '%')
 		local mount
-		mount=$(echo "$line" | awk '{prinf $6}')
+		mount=$(echo "$line" | awk '{print $6}')
 
 		if [[ "$usage" -ge "$DISK_THRESHOLD" ]]; then
 			log "Disk ${mount}: ${usage}% - ALERT (threshold: ${DISK_THRESHOLD}%)"
@@ -65,3 +65,40 @@ check_disk() {
 		fi
 	done < <(df -h | grep '^/dev/')
 }
+
+check_services() {
+	for service in $SERVICES; do
+		if systemctl is-active --quiet "$service"; then
+			ok "Service ${service}: running"
+		else
+			log "Service ${service}: STOPPED - ALERT"
+			send_alert "Service" "$service" ""
+		fi
+	done
+}
+
+#Run modes
+
+run_once() {
+	log "=== Health check started ==="
+	check_cpu
+	check_ram
+	check_disk
+	check_services
+	log "Health check complete"
+}
+
+run_daemon() {
+	log "===Monitor daemon started (interval: ${DAEMON_INTERVAL}s) ==="
+	while true; do
+		run_once
+		sleep $"DAEMON_INTERVAL"
+	done
+}
+
+#Entry point
+case "${1:-once}" in
+	once)	run_once ;;
+	daemon)	run_daemon ;;
+	*)	echo "Usage: bash monitor.sh [once|daemon]"; exit 1 ;;
+esac
