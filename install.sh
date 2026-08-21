@@ -29,3 +29,30 @@ install_cron() {
 	fi
 	echo "Check crontab: crontab -l"
 }
+
+install_daemon() {
+	local service_file="/etc/systemd/system/health-monitor.service"
+
+	cat > "$service_file" <<EOF
+[Unit]
+Description=Server Health Monitor
+After=network.target
+
+[Service]
+Type=Simple
+ExecStart=/bin/bash ${MONITOR} daemon
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+	systemctl daemon-reload
+	systemctl enable health-monitor > /dev/null 2>&1
+	systemctl restart health-monitor
+
+	echo "Systemd service installed and sterted"
+	echo "Check status: systemctl status health-monitor"
+	echo "Check logs: journalctl -u health-monitor -f"
+}
