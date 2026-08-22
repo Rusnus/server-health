@@ -52,7 +52,7 @@ EOF
 	systemctl enable health-monitor > /dev/null 2>&1
 	systemctl restart health-monitor
 
-	echo "Systemd service installed and sterted"
+	echo "Systemd service installed and started"
 	echo "Check status: systemctl status health-monitor"
 	echo "Check logs: journalctl -u health-monitor -f"
 }
@@ -66,7 +66,7 @@ remove() {
 		echo "Cron job not found"
 	fi
 #systemd service
-	if systemctl list-units --full -all | grep -q "health-monitor.service"; then
+	if [[ -f /etc/systemd/system/health-monitor.service ]]; then
 		systemctl stop health-monitor
 		systemctl disable health-monitor > /dev/null 2>&1
 		rm -f /etc/systemd/system/health-monitor.service
@@ -76,3 +76,10 @@ remove() {
 		echo "Systemd service not found"
 	fi
 }
+
+case "${1:-}" in
+	--cron)	install_cron ;;
+	--daemon)	install_daemon ;;
+	--remove)	remove ;;
+	*)	usage; exit 0 ;;
+esac
