@@ -56,3 +56,23 @@ EOF
 	echo "Check status: systemctl status health-monitor"
 	echo "Check logs: journalctl -u health-monitor -f"
 }
+
+remove() {
+#cron
+	if crontab -l 2>/dev/null | grep -q "$MONITOR"; then
+		crontab -l | grep -v "$MONITOR" | crontab -
+		echo "Cron job removed"
+	else
+		echo "Cron job not found"
+	fi
+#systemd service
+	if systemctl list-units --full -all | grep -q "health-monitor.service"; then
+		systemctl stop health-monitor
+		systemctl disable health-monitor > /dev/null 2>&1
+		rm -f /etc/systemd/system/health-monitor.service
+		systemctl daemon-reload
+		echo "Systemd service removed"
+	else
+		echo "Systemd service not found"
+	fi
+}
